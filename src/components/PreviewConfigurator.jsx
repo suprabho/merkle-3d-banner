@@ -1,23 +1,27 @@
 import { useState } from 'react'
 
 const PRESETS = [
-  { name: 'Mobile', width: 375, offsetX: -15, offsetY: 0, fov: 50 },
-  { name: 'Tablet', width: 768, offsetX: -8, offsetY: 0, fov: 50 },
-  { name: 'Desktop', width: 1024, offsetX: 0, offsetY: 0, fov: 50 },
-  { name: 'Large Desktop', width: 1440, offsetX: 10, offsetY: 0, fov: 50 },
+  { name: 'Mobile S', width: 375, offsetX: 0, offsetY: 0, fov: 50 },
+  { name: 'Mobile L', width: 479, offsetX: 0, offsetY: 0, fov: 50 },
+  { name: 'Tablet', width: 767, offsetX: 0, offsetY: 0, fov: 50 },
+  { name: 'Laptop', width: 991, offsetX: 0, offsetY: 0, fov: 50 },
+  { name: 'Desktop', width: 1200, offsetX: 0, offsetY: 0, fov: 50 },
+  { name: 'Large', width: 1920, offsetX: 0, offsetY: 0, fov: 50 },
 ]
 
 export default function PreviewConfigurator() {
   const [baseUrl, setBaseUrl] = useState(window.location.origin)
-  const [previewWidth, setPreviewWidth] = useState(1024)
+  const [previewWidth, setPreviewWidth] = useState(1200)
   const [offsetX, setOffsetX] = useState(0)
   const [offsetY, setOffsetY] = useState(0)
   const [fov, setFov] = useState(50)
   const [breakpointConfigs, setBreakpointConfigs] = useState([
-    { name: 'Mobile', maxWidth: 767, offsetX: -15, offsetY: 0, fov: 50 },
-    { name: 'Tablet', maxWidth: 1023, offsetX: -8, offsetY: 0, fov: 50 },
-    { name: 'Desktop', maxWidth: 1439, offsetX: 0, offsetY: 0, fov: 50 },
-    { name: 'Large', maxWidth: 9999, offsetX: 10, offsetY: 0, fov: 50 },
+    { name: 'Mobile S', maxWidth: 479, offsetX: 0, offsetY: 0, fov: 50 },
+    { name: 'Mobile L', maxWidth: 767, offsetX: 0, offsetY: 0, fov: 50 },
+    { name: 'Tablet', maxWidth: 991, offsetX: 0, offsetY: 0, fov: 50 },
+    { name: 'Laptop', maxWidth: 1439, offsetX: 0, offsetY: 0, fov: 50 },
+    { name: 'Desktop', maxWidth: 1919, offsetX: 0, offsetY: 0, fov: 50 },
+    { name: 'Large', maxWidth: 9999, offsetX: 0, offsetY: 0, fov: 50 },
   ])
   const [copied, setCopied] = useState(false)
 
@@ -95,7 +99,7 @@ export default function PreviewConfigurator() {
           <input
             type="range"
             min="320"
-            max="1920"
+            max="2560"
             value={previewWidth}
             onChange={(e) => setPreviewWidth(Number(e.target.value))}
             style={styles.slider}
@@ -187,54 +191,72 @@ export default function PreviewConfigurator() {
         {/* Breakpoint Configs */}
         <div style={styles.section}>
           <label style={styles.label}>Breakpoint Settings</label>
-          {breakpointConfigs.map((bp, index) => (
-            <div key={bp.name} style={styles.breakpointCard}>
-              <div style={styles.breakpointHeader}>
-                <span style={styles.breakpointName}>{bp.name}</span>
-                <span style={styles.breakpointWidth}>≤{bp.maxWidth}px</span>
-                <button
-                  onClick={() => {
-                    setOffsetX(bp.offsetX)
-                    setOffsetY(bp.offsetY)
-                    setFov(bp.fov)
-                  }}
-                  style={styles.applyButton}
-                  title="Apply to preview"
-                >
-                  Preview
-                </button>
+          {breakpointConfigs.map((bp, index) => {
+            const minWidth = index === 0 ? 0 : breakpointConfigs[index - 1].maxWidth + 1
+            const rangeLabel = bp.maxWidth >= 9999 ? `${minWidth}px+` : `${minWidth}-${bp.maxWidth}px`
+            return (
+              <div key={bp.name} style={styles.breakpointCard}>
+                <div style={styles.breakpointHeader}>
+                  <span style={styles.breakpointName}>{bp.name}</span>
+                  <span style={styles.breakpointWidth}>{rangeLabel}</span>
+                </div>
+                <div style={styles.breakpointInputs}>
+                  <div style={styles.inputGroup}>
+                    <span style={styles.inputLabel}>X</span>
+                    <input
+                      type="number"
+                      value={bp.offsetX}
+                      onChange={(e) => updateBreakpointConfig(index, 'offsetX', Number(e.target.value))}
+                      style={styles.smallInput}
+                    />
+                  </div>
+                  <div style={styles.inputGroup}>
+                    <span style={styles.inputLabel}>Y</span>
+                    <input
+                      type="number"
+                      value={bp.offsetY}
+                      onChange={(e) => updateBreakpointConfig(index, 'offsetY', Number(e.target.value))}
+                      style={styles.smallInput}
+                    />
+                  </div>
+                  <div style={styles.inputGroup}>
+                    <span style={styles.inputLabel}>FOV</span>
+                    <input
+                      type="number"
+                      value={bp.fov}
+                      onChange={(e) => updateBreakpointConfig(index, 'fov', Number(e.target.value))}
+                      style={styles.smallInput}
+                    />
+                  </div>
+                </div>
+                <div style={styles.breakpointActions}>
+                  <button
+                    onClick={() => {
+                      setPreviewWidth(Math.floor((minWidth + bp.maxWidth) / 2))
+                      setOffsetX(bp.offsetX)
+                      setOffsetY(bp.offsetY)
+                      setFov(bp.fov)
+                    }}
+                    style={styles.actionButton}
+                    title="Preview this breakpoint"
+                  >
+                    Preview
+                  </button>
+                  <button
+                    onClick={() => {
+                      updateBreakpointConfig(index, 'offsetX', offsetX)
+                      updateBreakpointConfig(index, 'offsetY', offsetY)
+                      updateBreakpointConfig(index, 'fov', fov)
+                    }}
+                    style={{ ...styles.actionButton, background: '#4a90d9' }}
+                    title="Save current values to this breakpoint"
+                  >
+                    Set from current
+                  </button>
+                </div>
               </div>
-              <div style={styles.breakpointInputs}>
-                <div style={styles.inputGroup}>
-                  <span style={styles.inputLabel}>X</span>
-                  <input
-                    type="number"
-                    value={bp.offsetX}
-                    onChange={(e) => updateBreakpointConfig(index, 'offsetX', Number(e.target.value))}
-                    style={styles.smallInput}
-                  />
-                </div>
-                <div style={styles.inputGroup}>
-                  <span style={styles.inputLabel}>Y</span>
-                  <input
-                    type="number"
-                    value={bp.offsetY}
-                    onChange={(e) => updateBreakpointConfig(index, 'offsetY', Number(e.target.value))}
-                    style={styles.smallInput}
-                  />
-                </div>
-                <div style={styles.inputGroup}>
-                  <span style={styles.inputLabel}>FOV</span>
-                  <input
-                    type="number"
-                    value={bp.fov}
-                    onChange={(e) => updateBreakpointConfig(index, 'fov', Number(e.target.value))}
-                    style={styles.smallInput}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Generate Button */}
@@ -396,12 +418,18 @@ const styles = {
     color: '#fff',
     fontSize: '12px',
   },
-  applyButton: {
-    padding: '4px 8px',
+  breakpointActions: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '8px',
+  },
+  actionButton: {
+    flex: 1,
+    padding: '6px 8px',
     background: '#3a3a3a',
     border: 'none',
     borderRadius: '3px',
-    color: '#aaa',
+    color: '#fff',
     cursor: 'pointer',
     fontSize: '11px',
   },
