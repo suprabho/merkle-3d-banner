@@ -1,0 +1,165 @@
+<!--
+  RESPONSIVE IFRAME EMBED CODE
+  ============================
+
+  Replace YOUR_DEPLOYED_URL with your actual deployed URL.
+  The offsetX parameter moves the entire scene (logo, grid, particles)
+  left (negative) or right (positive).
+
+  Standard breakpoints:
+  - Mobile: 320px - 767px
+  - Tablet: 768px - 1023px
+  - Desktop: 1024px - 1439px
+  - Large Desktop: 1440px+
+-->
+
+<!-- OPTION 1: CSS-only approach with multiple iframes (simpler, but loads multiple iframes) -->
+<style>
+  .embed-container {
+    position: relative;
+    width: 100%;
+    height: 400px; /* Adjust as needed */
+  }
+
+  .embed-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  /* Mobile: offsetX = -15 (shift left) */
+  .embed-mobile { display: block; }
+  .embed-tablet { display: none; }
+  .embed-desktop { display: none; }
+  .embed-large { display: none; }
+
+  /* Tablet: offsetX = -8 */
+  @media (min-width: 768px) {
+    .embed-mobile { display: none; }
+    .embed-tablet { display: block; }
+  }
+
+  /* Desktop: offsetX = 0 (centered) */
+  @media (min-width: 1024px) {
+    .embed-tablet { display: none; }
+    .embed-desktop { display: block; }
+  }
+
+  /* Large Desktop: offsetX = 10 (shift right) */
+  @media (min-width: 1440px) {
+    .embed-desktop { display: none; }
+    .embed-large { display: block; }
+  }
+</style>
+
+<div class="embed-container">
+  <iframe class="embed-mobile" src="YOUR_DEPLOYED_URL/embed.html?offsetX=-15" loading="lazy"></iframe>
+  <iframe class="embed-tablet" src="YOUR_DEPLOYED_URL/embed.html?offsetX=-8" loading="lazy"></iframe>
+  <iframe class="embed-desktop" src="YOUR_DEPLOYED_URL/embed.html?offsetX=0" loading="lazy"></iframe>
+  <iframe class="embed-large" src="YOUR_DEPLOYED_URL/embed.html?offsetX=10" loading="lazy"></iframe>
+</div>
+
+
+<!-- ================================================================== -->
+
+
+<!-- OPTION 2: JavaScript approach with single iframe (recommended - more efficient) -->
+<style>
+  .embed-container-js {
+    position: relative;
+    width: 100%;
+    height: 400px; /* Adjust as needed */
+  }
+
+  .embed-container-js iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+</style>
+
+<div class="embed-container-js">
+  <iframe id="glass-logo-embed" loading="lazy"></iframe>
+</div>
+
+<script>
+(function() {
+  const BASE_URL = 'YOUR_DEPLOYED_URL/embed.html';
+
+  // Define breakpoints and their corresponding x offsets
+  const breakpoints = [
+    { maxWidth: 767, offsetX: -15 },   // Mobile
+    { maxWidth: 1023, offsetX: -8 },   // Tablet
+    { maxWidth: 1439, offsetX: 0 },    // Desktop
+    { maxWidth: Infinity, offsetX: 10 } // Large Desktop
+  ];
+
+  function getOffsetForWidth(width) {
+    for (const bp of breakpoints) {
+      if (width <= bp.maxWidth) {
+        return bp.offsetX;
+      }
+    }
+    return 0;
+  }
+
+  function updateIframeSrc() {
+    const iframe = document.getElementById('glass-logo-embed');
+    const width = window.innerWidth;
+    const offsetX = getOffsetForWidth(width);
+    const newSrc = `${BASE_URL}?offsetX=${offsetX}`;
+
+    if (iframe.src !== newSrc) {
+      iframe.src = newSrc;
+    }
+  }
+
+  // Initial load
+  updateIframeSrc();
+
+  // Update on resize (debounced)
+  let resizeTimeout;
+  window.addEventListener('resize', function() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(updateIframeSrc, 250);
+  });
+})();
+</script>
+
+
+<!-- ================================================================== -->
+
+
+<!-- OPTION 3: Simple single iframe (if you don't need responsive offsets) -->
+<iframe
+  src="YOUR_DEPLOYED_URL/embed.html?offsetX=0"
+  width="100%"
+  height="400"
+  style="border: none;"
+  loading="lazy"
+></iframe>
+
+
+<!-- ================================================================== -->
+
+
+<!--
+  OFFSET VALUES REFERENCE:
+  ========================
+
+  The offsetX parameter accepts any number:
+  - Negative values (-15, -10, -5): Shift scene to the LEFT
+  - Zero (0): Center the scene
+  - Positive values (5, 10, 15): Shift scene to the RIGHT
+
+  Recommended offsets by screen size:
+  - Mobile (320-767px):     offsetX = -15 to -10
+  - Tablet (768-1023px):    offsetX = -8 to -5
+  - Desktop (1024-1439px):  offsetX = 0
+  - Large (1440px+):        offsetX = 5 to 15
+
+  Adjust these values based on your layout needs!
+-->
