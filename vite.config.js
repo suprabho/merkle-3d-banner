@@ -10,6 +10,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         embed: resolve(__dirname, 'embed.html'),
+        preview: resolve(__dirname, 'preview.html'),
       },
     },
   },

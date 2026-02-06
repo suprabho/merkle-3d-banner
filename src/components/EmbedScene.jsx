@@ -5,34 +5,38 @@ import BackgroundGrid from './BackgroundGrid'
 import GlassLogo from './GlassLogo'
 import ParticleSystem from './Particles'
 
-function getOffsetFromURL() {
+function getParamsFromURL() {
     const params = new URLSearchParams(window.location.search)
-    const offset = parseFloat(params.get('offsetX')) || 0
-    return offset
+    return {
+        offsetX: parseFloat(params.get('offsetX')) || 0,
+        offsetY: parseFloat(params.get('offsetY')) || 0,
+        fov: parseFloat(params.get('fov')) || 50,
+    }
 }
 
 export default function EmbedScene() {
-    const offsetX = useMemo(() => getOffsetFromURL(), [])
+    const { offsetX, offsetY, fov } = useMemo(() => getParamsFromURL(), [])
 
     return (
         <Canvas>
-            <PerspectiveCamera makeDefault position={[0, 0, 50]} fov={50} />
+            {/* Move camera along x/y axis for true pan (not rotation) */}
+            <PerspectiveCamera makeDefault position={[offsetX, offsetY, 50]} fov={fov} />
             <OrbitControls
                 makeDefault
                 enableZoom={false}
                 enableRotate={false}
                 enablePan={false}
-                target={[offsetX, 0, 0]}
+                target={[offsetX, offsetY, 0]}
             />
 
             <color attach="background" args={['#ffffff']} />
 
             {/* Lighting */}
             <ambientLight intensity={0.5} />
-            <spotLight position={[10 + offsetX, 20, 10]} intensity={200} angle={0.5} penumbra={1} castShadow />
+            <spotLight position={[10, 20, 10]} intensity={200} angle={0.5} penumbra={1} castShadow />
 
             <Suspense fallback={null}>
-                <group position={[offsetX, 0, 0]}>
+                <group>
                     <GlassLogo />
                     <BackgroundGrid />
                     <ParticleSystem count={4} />
