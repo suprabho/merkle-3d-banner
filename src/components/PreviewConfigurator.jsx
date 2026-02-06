@@ -24,8 +24,21 @@ export default function PreviewConfigurator() {
     { name: 'Large', maxWidth: 9999, offsetX: 0, offsetY: 0, fov: 50 },
   ])
   const [copied, setCopied] = useState(false)
+  const [debugMode, setDebugMode] = useState(true)
 
-  const embedUrl = `${baseUrl}/embed.html?offsetX=${offsetX}&offsetY=${offsetY}&fov=${fov}`
+  const embedUrl = `${baseUrl}/embed.html?offsetX=${offsetX}&offsetY=${offsetY}&fov=${fov}${debugMode ? '&debug=true' : ''}`
+
+  // Find which breakpoint matches the current preview width
+  const getActiveBreakpoint = (width) => {
+    for (let i = 0; i < breakpointConfigs.length; i++) {
+      if (width <= breakpointConfigs[i].maxWidth) {
+        return breakpointConfigs[i]
+      }
+    }
+    return breakpointConfigs[breakpointConfigs.length - 1]
+  }
+
+  const activeBreakpoint = getActiveBreakpoint(previewWidth)
 
   const updateBreakpointConfig = (index, field, value) => {
     setBreakpointConfigs(prev => {
@@ -44,8 +57,10 @@ export default function PreviewConfigurator() {
   }
 
   const generateEmbedCode = () => {
+    // Sort breakpoints by maxWidth ascending to ensure correct matching
+    const sortedBps = [...breakpointConfigs].sort((a, b) => a.maxWidth - b.maxWidth)
     const bpConfig = JSON.stringify(
-      breakpointConfigs.map(bp => ({
+      sortedBps.map(bp => ({
         maxWidth: bp.maxWidth,
         offsetX: bp.offsetX,
         offsetY: bp.offsetY,
@@ -60,15 +75,23 @@ export default function PreviewConfigurator() {
 (function() {
   var BASE_URL = '${baseUrl}/embed.html';
   var breakpoints = ${bpConfig};
+  console.log('[GlassLogo Embed] Breakpoints:', breakpoints);
   function getConfig(w) {
     for (var i = 0; i < breakpoints.length; i++) {
-      if (w <= breakpoints[i].maxWidth) return breakpoints[i];
+      if (w <= breakpoints[i].maxWidth) {
+        console.log('[GlassLogo Embed] Width', w, '-> matched breakpoint', i, '(maxWidth:', breakpoints[i].maxWidth + ')');
+        return breakpoints[i];
+      }
     }
+    console.log('[GlassLogo Embed] Width', w, '-> no match, using defaults');
     return { offsetX: 0, offsetY: 0, fov: 50 };
   }
   function update() {
-    var cfg = getConfig(window.innerWidth);
-    document.getElementById('glass-logo-embed').src = BASE_URL + '?offsetX=' + cfg.offsetX + '&offsetY=' + cfg.offsetY + '&fov=' + cfg.fov;
+    var w = window.innerWidth;
+    var cfg = getConfig(w);
+    var src = BASE_URL + '?offsetX=' + cfg.offsetX + '&offsetY=' + cfg.offsetY + '&fov=' + cfg.fov;
+    console.log('[GlassLogo Embed] Setting iframe src:', src);
+    document.getElementById('glass-logo-embed').src = src;
   }
   update();
   var t;
@@ -114,6 +137,20 @@ export default function PreviewConfigurator() {
             onChange={(e) => setPreviewWidth(Number(e.target.value))}
             style={styles.slider}
           />
+          <div style={{ marginBottom: '8px', fontSize: '12px', color: '#888' }}>
+            Current breakpoint: <strong style={{ color: '#4a90d9' }}>{activeBreakpoint.name}</strong>
+            {' '}(X:{activeBreakpoint.offsetX}, Y:{activeBreakpoint.offsetY}, FOV:{activeBreakpoint.fov})
+            <button
+              onClick={() => {
+                setOffsetX(activeBreakpoint.offsetX)
+                setOffsetY(activeBreakpoint.offsetY)
+                setFov(activeBreakpoint.fov)
+              }}
+              style={{ marginLeft: '8px', padding: '2px 6px', fontSize: '11px', background: '#4a90d9', border: 'none', borderRadius: '3px', color: '#fff', cursor: 'pointer' }}
+            >
+              Load
+            </button>
+          </div>
           <div style={styles.presetButtons}>
             {PRESETS.map((preset) => (
               <button
@@ -204,10 +241,16 @@ export default function PreviewConfigurator() {
           {breakpointConfigs.map((bp, index) => {
             const minWidth = index === 0 ? 0 : breakpointConfigs[index - 1].maxWidth + 1
             const rangeLabel = bp.maxWidth >= 9999 ? `${minWidth}px+` : `${minWidth}-${bp.maxWidth}px`
+            const isActive = activeBreakpoint.name === bp.name
             return (
-              <div key={bp.name} style={styles.breakpointCard}>
+              <div key={bp.name} style={{
+                ...styles.breakpointCard,
+                border: isActive ? '2px solid #4a90d9' : '2px solid transparent',
+              }}>
                 <div style={styles.breakpointHeader}>
-                  <span style={styles.breakpointName}>{bp.name}</span>
+                  <span style={styles.breakpointName}>
+                    {bp.name} {isActive && <span style={{ color: '#4a90d9' }}>●</span>}
+                  </span>
                   <span style={styles.breakpointWidth}>{rangeLabel}</span>
                 </div>
                 <div style={styles.breakpointInputs}>
@@ -275,6 +318,23 @@ export default function PreviewConfigurator() {
           {copied ? 'Copied!' : 'Copy Embed Code'}
         </button>
 
+        {/* Breakpoint Test */}
+        <div style={styles.section}>
+          <label style={styles.label}>Breakpoint Verification</label>
+          <div style={{ fontSize: '11px', background: '#1a1a1a', padding: '8px', borderRadius: '4px' }}>
+            {[375, 479, 480, 767, 768, 991, 992, 1439, 1440, 1919, 1920, 2560].map(w => {
+              const bp = getActiveBreakpoint(w)
+              return (
+                <div key={w} style={{ display: 'flex', gap: '8px', padding: '2px 0', borderBottom: '1px solid #333' }}>
+                  <span style={{ width: '50px', color: '#888' }}>{w}px</span>
+                  <span style={{ width: '70px', color: '#4a90d9' }}>{bp.name}</span>
+                  <span style={{ color: '#666' }}>X:{bp.offsetX} Y:{bp.offsetY} FOV:{bp.fov}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
         {/* Generated Code Preview */}
         <div style={styles.section}>
           <label style={styles.label}>Generated Embed Code</label>
@@ -285,7 +345,15 @@ export default function PreviewConfigurator() {
       {/* Preview Area */}
       <div style={styles.previewArea}>
         <div style={styles.previewHeader}>
-          Preview ({previewWidth}px × 100%)
+          Preview ({previewWidth}px) — <span style={{ color: '#4a90d9' }}>{activeBreakpoint.name}</span> breakpoint
+          <label style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={debugMode}
+              onChange={(e) => setDebugMode(e.target.checked)}
+            />
+            Debug overlay
+          </label>
         </div>
         <div style={styles.previewWrapper}>
           <div
@@ -474,6 +542,8 @@ const styles = {
     background: '#2a2a2a',
   },
   previewHeader: {
+    display: 'flex',
+    alignItems: 'center',
     padding: '12px 20px',
     background: '#333',
     fontSize: '13px',
