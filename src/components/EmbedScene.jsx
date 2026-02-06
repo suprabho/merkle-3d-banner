@@ -11,6 +11,7 @@ function getParamsFromURL() {
         offsetX: parseFloat(params.get('offsetX')) || 0,
         offsetY: parseFloat(params.get('offsetY')) || 0,
         fov: parseFloat(params.get('fov')) || 50,
+        count: parseInt(params.get('count')) || 4,
         debug: params.get('debug') === 'true',
     }
     console.log('[EmbedScene] URL params:', window.location.search, '→', result)
@@ -18,11 +19,11 @@ function getParamsFromURL() {
 }
 
 export default function EmbedScene() {
-    const { offsetX, offsetY, fov, debug } = useMemo(() => getParamsFromURL(), [])
+    const { offsetX, offsetY, fov, count, debug } = useMemo(() => getParamsFromURL(), [])
 
     useEffect(() => {
-        console.log('[EmbedScene] Mounted with offsetX:', offsetX, 'offsetY:', offsetY, 'fov:', fov)
-    }, [offsetX, offsetY, fov])
+        console.log('[EmbedScene] Mounted with offsetX:', offsetX, 'offsetY:', offsetY, 'fov:', fov, 'count:', count)
+    }, [offsetX, offsetY, fov, count])
 
     return (
         <>
@@ -39,10 +40,13 @@ export default function EmbedScene() {
                     fontFamily: 'monospace',
                     zIndex: 1000,
                 }}>
-                    X: {offsetX} | Y: {offsetY} | FOV: {fov}
+                    X: {offsetX} | Y: {offsetY} | FOV: {fov} | Dots: {count}
                 </div>
             )}
-            <Canvas>
+            <Canvas
+                eventSource={typeof window !== 'undefined' ? document.getElementById('root') : undefined}
+                eventPrefix="offset"
+            >
                 {/* Move camera along x/y axis for true pan (not rotation) */}
                 <PerspectiveCamera makeDefault position={[offsetX, offsetY, 50]} fov={fov} />
                 <OrbitControls
@@ -63,7 +67,7 @@ export default function EmbedScene() {
                     <group>
                         <GlassLogo />
                         <BackgroundGrid />
-                        <ParticleSystem count={4} />
+                        <ParticleSystem count={count} />
                     </group>
 
                     {/* Environment for Glass Reflections */}

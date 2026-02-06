@@ -1,32 +1,34 @@
 import { useState } from 'react'
 
 const PRESETS = [
-  { name: 'Mobile S', width: 375, offsetX: 0, offsetY: 0, fov: 50 },
-  { name: 'Mobile L', width: 479, offsetX: 0, offsetY: 0, fov: 50 },
-  { name: 'Tablet', width: 767, offsetX: 0, offsetY: 0, fov: 50 },
-  { name: 'Laptop', width: 991, offsetX: 0, offsetY: 0, fov: 50 },
-  { name: 'Desktop', width: 1200, offsetX: 0, offsetY: 0, fov: 50 },
-  { name: 'Large', width: 1920, offsetX: 0, offsetY: 0, fov: 50 },
+  { name: 'Mobile S', width: 375, offsetX: 0, offsetY: 0, fov: 50, count: 4 },
+  { name: 'Mobile L', width: 479, offsetX: 0, offsetY: 0, fov: 50, count: 4 },
+  { name: 'Tablet', width: 767, offsetX: 0, offsetY: 0, fov: 50, count: 4 },
+  { name: 'Laptop', width: 991, offsetX: 0, offsetY: 0, fov: 50, count: 4 },
+  { name: 'Desktop', width: 1200, offsetX: 0, offsetY: 0, fov: 50, count: 4 },
+  { name: 'Large', width: 1920, offsetX: 0, offsetY: 0, fov: 50, count: 4 },
 ]
 
 export default function PreviewConfigurator() {
   const [baseUrl, setBaseUrl] = useState(window.location.origin)
   const [previewWidth, setPreviewWidth] = useState(1200)
+  const [embedHeight, setEmbedHeight] = useState(400)
   const [offsetX, setOffsetX] = useState(0)
   const [offsetY, setOffsetY] = useState(0)
   const [fov, setFov] = useState(50)
+  const [count, setCount] = useState(4)
   const [breakpointConfigs, setBreakpointConfigs] = useState([
-    { name: 'Mobile S', maxWidth: 479, offsetX: 0, offsetY: 0, fov: 50 },
-    { name: 'Mobile L', maxWidth: 767, offsetX: 0, offsetY: 0, fov: 50 },
-    { name: 'Tablet', maxWidth: 991, offsetX: 0, offsetY: 0, fov: 50 },
-    { name: 'Laptop', maxWidth: 1439, offsetX: 0, offsetY: 0, fov: 50 },
-    { name: 'Desktop', maxWidth: 1919, offsetX: 0, offsetY: 0, fov: 50 },
-    { name: 'Large', maxWidth: 9999, offsetX: 0, offsetY: 0, fov: 50 },
+    { name: 'Mobile S', maxWidth: 479, offsetX: 0, offsetY: 0, fov: 50, count: 4 },
+    { name: 'Mobile L', maxWidth: 767, offsetX: 0, offsetY: 0, fov: 50, count: 4 },
+    { name: 'Tablet', maxWidth: 991, offsetX: 0, offsetY: 0, fov: 50, count: 4 },
+    { name: 'Laptop', maxWidth: 1439, offsetX: 0, offsetY: 0, fov: 50, count: 4 },
+    { name: 'Desktop', maxWidth: 1919, offsetX: 0, offsetY: 0, fov: 50, count: 4 },
+    { name: 'Large', maxWidth: 9999, offsetX: 0, offsetY: 0, fov: 50, count: 4 },
   ])
   const [copied, setCopied] = useState(false)
   const [debugMode, setDebugMode] = useState(true)
 
-  const embedUrl = `${baseUrl}/embed.html?offsetX=${offsetX}&offsetY=${offsetY}&fov=${fov}${debugMode ? '&debug=true' : ''}`
+  const embedUrl = `${baseUrl}/embed.html?offsetX=${offsetX}&offsetY=${offsetY}&fov=${fov}&count=${count}${debugMode ? '&debug=true' : ''}`
 
   // Find which breakpoint matches the current preview width
   const getActiveBreakpoint = (width) => {
@@ -64,11 +66,12 @@ export default function PreviewConfigurator() {
         maxWidth: bp.maxWidth,
         offsetX: bp.offsetX,
         offsetY: bp.offsetY,
-        fov: bp.fov
+        fov: bp.fov,
+        count: bp.count
       }))
     )
 
-    return `<div style="width: 100%; height: 400px;">
+    return `<div style="width: 100%; height: ${embedHeight}px;">
   <iframe id="glass-logo-embed" style="width: 100%; height: 100%; border: none;" loading="lazy"></iframe>
 </div>
 <script>
@@ -84,12 +87,12 @@ export default function PreviewConfigurator() {
       }
     }
     console.log('[GlassLogo Embed] Width', w, '-> no match, using defaults');
-    return { offsetX: 0, offsetY: 0, fov: 50 };
+    return { offsetX: 0, offsetY: 0, fov: 50, count: 4 };
   }
   function update() {
     var w = window.innerWidth;
     var cfg = getConfig(w);
-    var src = BASE_URL + '?offsetX=' + cfg.offsetX + '&offsetY=' + cfg.offsetY + '&fov=' + cfg.fov;
+    var src = BASE_URL + '?offsetX=' + cfg.offsetX + '&offsetY=' + cfg.offsetY + '&fov=' + cfg.fov + '&count=' + cfg.count;
     console.log('[GlassLogo Embed] Setting iframe src:', src);
     document.getElementById('glass-logo-embed').src = src;
   }
@@ -139,12 +142,13 @@ export default function PreviewConfigurator() {
           />
           <div style={{ marginBottom: '8px', fontSize: '12px', color: '#888' }}>
             Current breakpoint: <strong style={{ color: '#4a90d9' }}>{activeBreakpoint.name}</strong>
-            {' '}(X:{activeBreakpoint.offsetX}, Y:{activeBreakpoint.offsetY}, FOV:{activeBreakpoint.fov})
+            {' '}(X:{activeBreakpoint.offsetX}, Y:{activeBreakpoint.offsetY}, FOV:{activeBreakpoint.fov}, Dots:{activeBreakpoint.count})
             <button
               onClick={() => {
                 setOffsetX(activeBreakpoint.offsetX)
                 setOffsetY(activeBreakpoint.offsetY)
                 setFov(activeBreakpoint.fov)
+                setCount(activeBreakpoint.count)
               }}
               style={{ marginLeft: '8px', padding: '2px 6px', fontSize: '11px', background: '#4a90d9', border: 'none', borderRadius: '3px', color: '#fff', cursor: 'pointer' }}
             >
@@ -160,6 +164,7 @@ export default function PreviewConfigurator() {
                   setOffsetX(preset.offsetX)
                   setOffsetY(preset.offsetY)
                   setFov(preset.fov)
+                  setCount(preset.count)
                 }}
                 style={{
                   ...styles.presetButton,
@@ -169,6 +174,28 @@ export default function PreviewConfigurator() {
                 {preset.name}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Embed Height Control */}
+        <div style={styles.section}>
+          <label style={styles.label}>Embed Height: {embedHeight}px</label>
+          <div style={styles.sliderRow}>
+            <input
+              type="range"
+              min="200"
+              max="1200"
+              step="50"
+              value={embedHeight}
+              onChange={(e) => setEmbedHeight(Number(e.target.value))}
+              style={styles.sliderFlex}
+            />
+            <input
+              type="number"
+              value={embedHeight}
+              onChange={(e) => setEmbedHeight(Number(e.target.value))}
+              style={styles.numberInput}
+            />
           </div>
         </div>
 
@@ -235,6 +262,27 @@ export default function PreviewConfigurator() {
           </div>
         </div>
 
+        {/* Dots Count Control */}
+        <div style={styles.section}>
+          <label style={styles.label}>Number of Dots: {count}</label>
+          <div style={styles.sliderRow}>
+            <input
+              type="range"
+              min="0"
+              max="20"
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              style={styles.sliderFlex}
+            />
+            <input
+              type="number"
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              style={styles.numberInput}
+            />
+          </div>
+        </div>
+
         {/* Breakpoint Configs */}
         <div style={styles.section}>
           <label style={styles.label}>Breakpoint Settings</label>
@@ -281,6 +329,15 @@ export default function PreviewConfigurator() {
                       style={styles.smallInput}
                     />
                   </div>
+                  <div style={styles.inputGroup}>
+                    <span style={styles.inputLabel}>Dots</span>
+                    <input
+                      type="number"
+                      value={bp.count}
+                      onChange={(e) => updateBreakpointConfig(index, 'count', Number(e.target.value))}
+                      style={styles.smallInput}
+                    />
+                  </div>
                 </div>
                 <div style={styles.breakpointActions}>
                   <button
@@ -292,6 +349,7 @@ export default function PreviewConfigurator() {
                       setOffsetX(bp.offsetX)
                       setOffsetY(bp.offsetY)
                       setFov(bp.fov)
+                      setCount(bp.count)
                     }}
                     style={styles.actionButton}
                     title="Preview this breakpoint"
@@ -300,7 +358,7 @@ export default function PreviewConfigurator() {
                   </button>
                   <button
                     onClick={() => {
-                      setBreakpointValues(index, { offsetX, offsetY, fov })
+                      setBreakpointValues(index, { offsetX, offsetY, fov, count })
                     }}
                     style={{ ...styles.actionButton, background: '#4a90d9' }}
                     title="Save current values to this breakpoint"
@@ -328,7 +386,7 @@ export default function PreviewConfigurator() {
                 <div key={w} style={{ display: 'flex', gap: '8px', padding: '2px 0', borderBottom: '1px solid #333' }}>
                   <span style={{ width: '50px', color: '#888' }}>{w}px</span>
                   <span style={{ width: '70px', color: '#4a90d9' }}>{bp.name}</span>
-                  <span style={{ color: '#666' }}>X:{bp.offsetX} Y:{bp.offsetY} FOV:{bp.fov}</span>
+                  <span style={{ color: '#666' }}>X:{bp.offsetX} Y:{bp.offsetY} FOV:{bp.fov} Dots:{bp.count}</span>
                 </div>
               )
             })}
@@ -345,7 +403,7 @@ export default function PreviewConfigurator() {
       {/* Preview Area */}
       <div style={styles.previewArea}>
         <div style={styles.previewHeader}>
-          Preview ({previewWidth}px) — <span style={{ color: '#4a90d9' }}>{activeBreakpoint.name}</span> breakpoint
+          Preview ({previewWidth}px × {embedHeight}px) — <span style={{ color: '#4a90d9' }}>{activeBreakpoint.name}</span> breakpoint
           <label style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
             <input
               type="checkbox"
@@ -359,7 +417,7 @@ export default function PreviewConfigurator() {
           <div
             style={{
               width: `${previewWidth}px`,
-              height: '100%',
+              height: `${embedHeight}px`,
               margin: '0 auto',
               background: '#fff',
               boxShadow: '0 0 20px rgba(0,0,0,0.3)',
