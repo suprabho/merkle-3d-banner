@@ -28,9 +28,19 @@ export default function PreviewConfigurator() {
   const embedUrl = `${baseUrl}/embed.html?offsetX=${offsetX}&offsetY=${offsetY}&fov=${fov}`
 
   const updateBreakpointConfig = (index, field, value) => {
-    const updated = [...breakpointConfigs]
-    updated[index][field] = value
-    setBreakpointConfigs(updated)
+    setBreakpointConfigs(prev => {
+      const updated = [...prev]
+      updated[index] = { ...updated[index], [field]: value }
+      return updated
+    })
+  }
+
+  const setBreakpointValues = (index, values) => {
+    setBreakpointConfigs(prev => {
+      const updated = [...prev]
+      updated[index] = { ...updated[index], ...values }
+      return updated
+    })
   }
 
   const generateEmbedCode = () => {
@@ -232,7 +242,10 @@ export default function PreviewConfigurator() {
                 <div style={styles.breakpointActions}>
                   <button
                     onClick={() => {
-                      setPreviewWidth(Math.floor((minWidth + bp.maxWidth) / 2))
+                      const previewW = bp.maxWidth >= 9999
+                        ? Math.max(minWidth, 1920)
+                        : Math.floor((minWidth + bp.maxWidth) / 2)
+                      setPreviewWidth(previewW)
                       setOffsetX(bp.offsetX)
                       setOffsetY(bp.offsetY)
                       setFov(bp.fov)
@@ -244,9 +257,7 @@ export default function PreviewConfigurator() {
                   </button>
                   <button
                     onClick={() => {
-                      updateBreakpointConfig(index, 'offsetX', offsetX)
-                      updateBreakpointConfig(index, 'offsetY', offsetY)
-                      updateBreakpointConfig(index, 'fov', fov)
+                      setBreakpointValues(index, { offsetX, offsetY, fov })
                     }}
                     style={{ ...styles.actionButton, background: '#4a90d9' }}
                     title="Save current values to this breakpoint"
@@ -287,6 +298,7 @@ export default function PreviewConfigurator() {
             }}
           >
             <iframe
+              key={embedUrl}
               src={embedUrl}
               style={{ width: '100%', height: '100%', border: 'none' }}
               title="Preview"
