@@ -2,14 +2,26 @@ import { useLoader, useFrame, useThree } from '@react-three/fiber'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader'
 import { MeshTransmissionMaterial, Center } from '@react-three/drei'
 import * as THREE from 'three'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 
 export default function GlassLogo({ url = '/MS-Logo.svg' }) {
     const groupRef = useRef()
     const svgData = useLoader(SVGLoader, url)
     const [hovered, setHovered] = useState(false)
+    const [isSmallScreen, setIsSmallScreen] = useState(false)
     const targetRotation = useRef({ x: 0, y: 0 })
     const { viewport } = useThree()
+
+    useEffect(() => {
+        const checkScreenSize = () => {
+            setIsSmallScreen(window.innerWidth < 1080)
+        }
+
+        checkScreenSize()
+        window.addEventListener('resize', checkScreenSize)
+
+        return () => window.removeEventListener('resize', checkScreenSize)
+    }, [])
 
     useFrame((state) => {
         if (groupRef.current) {
@@ -46,12 +58,20 @@ export default function GlassLogo({ url = '/MS-Logo.svg' }) {
         })
     }, [svgData])
 
+    const handleInteraction = isSmallScreen
+        ? {
+              onClick: () => setHovered(!hovered)
+          }
+        : {
+              onPointerOver: () => setHovered(true),
+              onPointerOut: () => setHovered(false)
+          }
+
     return (
         <group
             ref={groupRef}
             rotation={[Math.PI / 2, 0, 0]}
-            onPointerOver={() => setHovered(true)}
-            onPointerOut={() => setHovered(false)}
+            {...handleInteraction}
         >
             {/* Use Center to ensure it pivots correctly */}
             <Center>
